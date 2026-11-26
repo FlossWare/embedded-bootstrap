@@ -1,0 +1,7 @@
+# nas-01 service manifest (trixie): rsyslog runs via init shim (see repo docs), smartmontools excluded (firmware smartd covers it)
+rsyslog
+cron
+ntpsec
+rsync
+msmtpd
+ssh
