@@ -5,6 +5,7 @@
 
 # Debian folder
 CHROOT_DIR=`readlink -f /mnt/md0/debian`
+[ -n "$CHROOT_DIR" ] && [ -d "$CHROOT_DIR/proc" ] || { echo "CHROOT_DIR invalid: $CHROOT_DIR"; exit 1; }
 
 CHROOT_SERVICES_LIST=/mnt/md0/alt-f/etc/chroot-services.list
 
@@ -46,7 +47,7 @@ startBind() {
 	#mount /mnt/sdc1 ${CHROOT_DIR}/mnt/usb
 	
 	mkdir -p ${CHROOT_DIR}/root
-	mount /mnt/md0/alt-f/root ${CHROOT_DIR}/root
+	mount -o bind /mnt/md0/alt-f/root ${CHROOT_DIR}/root
 }
 
 startServices() {
@@ -55,7 +56,7 @@ startServices() {
 		echo "Please, define Debian services to start in $CHROOT_SERVICES_LIST file!"
 		echo 'One service per line. Hint: these are script names from Debian /etc/init.d/'
 	else
-		for item in $(cat $CHROOT_SERVICES_LIST); do
+		grep -vE "^\s*(#|$)" $CHROOT_SERVICES_LIST | while read -r item; do
 			PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 			LC_ALL=C \
 			LANGUAGE=C \
@@ -75,25 +76,18 @@ start() {
 
 stopBind() {
 	umount ${CHROOT_DIR}/root
-	
-	#umount ${CHROOT_DIR}/exports/usbd
-	#umount ${CHROOT_DIR}/exports/usbc
-	#umount ${CHROOT_DIR}/exports
-	#umount $CHROOT_DIR/etc/motd
-	
-#	umount $CHROOT_DIR/etc/resolve.conf
-	umount $CHROOT_DIR/etc/hosts
-	
-	for dir in dev dev/pts proc sys; do
-		/bin/umount -l $CHROOT_DIR/$dir
-		sleep 2
+	umount ${CHROOT_DIR}/media/usb 2>/dev/null
+	umount ${CHROOT_DIR}/exports
+	umount ${CHROOT_DIR}/etc/motd
+	for dir in sys proc dev/pts dev; do
+		/bin/umount -l $CHROOT_DIR/$dir 2>/dev/null
 	done
 }
 
 stopServices() {
 	if [ -e "$CHROOT_SERVICES_LIST" ]; then
 		echo 'Stopping Debian services...'
-		for item in $(cat $CHROOT_SERVICES_LIST); do
+		grep -vE "^\s*(#|$)" $CHROOT_SERVICES_LIST | while read -r item; do
 			PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 			LC_ALL=C \
 			LANGUAGE=C \

@@ -7,12 +7,14 @@
 
 distro=trixie
 export LANG=C
+set -e
 
 /debootstrap/debootstrap --second-stage
 
 cat <<EOT > /etc/apt/sources.list
 deb http://ftp.debian.org/debian $distro main contrib non-free non-free-firmware
 deb http://ftp.debian.org/debian $distro-updates main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security $distro-security main contrib non-free non-free-firmware
 EOT
 
 apt-get update -y

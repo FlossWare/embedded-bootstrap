@@ -4,7 +4,7 @@
 
 export SCRIPT_HOME=/mnt/md0/alt-f/etc/init.d
 
-source ${SCRIPT_HOME}/util.sh
+. ${SCRIPT_HOME}/util.sh
 
 startMount() {
 	log "Start mount"
@@ -45,7 +45,7 @@ startBind() {
 startDebian() {
 	log "Start debian"
 	
-	/mnt/md0/alt-f/etc/init.d/debian.sh start 2>&1 >> /tmp/debian.log
+	/mnt/md0/alt-f/etc/init.d/debian.sh start >> /tmp/debian.log 2>&1
 }
 
 start() {
@@ -75,13 +75,8 @@ stopMount() {
 }
 
 stopBind() {
-	umount /root
-	
-	umount /etc/motd
-	
-	umount /exports/usb
-	
 	umount /exports
+	umount /etc/motd
 }
 
 stopDebian() {
