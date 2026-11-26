@@ -1,6 +1,6 @@
-# ddwrt-bootstrap
+# embedded-bootstrap
 
-Bootstrap scripts for DD-WRT routers with USB storage, Entware, and optional Debian chroot.
+Bootstrap scripts for embedded devices (DD-WRT, Alt-F) with USB storage, Entware, and optional Debian chroot.
 # Example: the Alt-F firmware variant (nas-01). Same DontBeAPadavan debian.sh lineage as the DD-WRT examples; entry via Alt-F USER_SCRIPT instead of nvram rc_usb.
 
 ## What it does
