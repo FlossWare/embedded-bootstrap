@@ -28,11 +28,11 @@ startBind() {
 	mountpoint -q $CHROOT_DIR/etc/motd 2>/dev/null || mount -o bind /mnt/md0/alt-f/etc/motd $CHROOT_DIR/etc/motd
 	
 	mkdir -p ${CHROOT_DIR}/exports
-	mount -o bind /mnt/md0/exports ${CHROOT_DIR}/exports
+	mountpoint -q ${CHROOT_DIR}/exports 2>/dev/null || mount -o bind /mnt/md0/exports ${CHROOT_DIR}/exports || echo "WARNING: exports bind failed" >> /tmp/debian.log
 	
 	mkdir -p ${CHROOT_DIR}/media/usb
 	if [ -e /dev/sdc1 ]; then
-		mount /dev/sdc1 ${CHROOT_DIR}/media/usb || echo "WARNING: /dev/sdc1 mount failed — media/usb is a bare directory" >> /tmp/debian.log
+		mountpoint -q ${CHROOT_DIR}/media/usb 2>/dev/null || mount /dev/sdc1 ${CHROOT_DIR}/media/usb || echo "WARNING: /dev/sdc1 mount failed — media/usb is a bare directory" >> /tmp/debian.log
 	else
 		echo "NOTE: no /dev/sdc1 present, skipping media/usb mount" >> /tmp/debian.log
 	fi
@@ -79,7 +79,9 @@ start() {
 
 stopBind() {
 	umount ${CHROOT_DIR}/root || echo "WARNING: root still mounted" >> /tmp/debian.log
-	umount ${CHROOT_DIR}/media/usb 2>/dev/null
+	if mountpoint -q ${CHROOT_DIR}/media/usb 2>/dev/null; then
+		umount ${CHROOT_DIR}/media/usb || echo "WARNING: media/usb still mounted" >> /tmp/debian.log
+	fi
 	umount ${CHROOT_DIR}/exports || echo "WARNING: exports still mounted" >> /tmp/debian.log
 	umount ${CHROOT_DIR}/etc/motd || echo "WARNING: motd still mounted" >> /tmp/debian.log
 	for dir in sys proc dev/pts dev; do

@@ -32,10 +32,10 @@ startBind() {
 	#mount -o bind /mnt/md0/alt-f/root /root
 	
 	touch /etc/motd
-	mount -o bind /mnt/md0/alt-f/etc/motd /etc/motd
+	mountpoint -q /etc/motd 2>/dev/null || mount -o bind /mnt/md0/alt-f/etc/motd /etc/motd
 	
 	mkdir -p /exports
-	mount -o bind /mnt/md0/exports /exports
+	mountpoint -q /exports 2>/dev/null || mount -o bind /mnt/md0/exports /exports
 	
 	#mkdir -p /mnt/md0/exports/usb
 	#mount -o bind /mnt/sdc1 /mnt/md0/exports/usb
@@ -75,8 +75,8 @@ stopMount() {
 }
 
 stopBind() {
-	umount /exports
-	umount /etc/motd
+	umount /exports || echo "WARNING: /exports still mounted" >> /tmp/flossware.log
+	umount /etc/motd || echo "WARNING: /etc/motd still mounted" >> /tmp/flossware.log
 }
 
 stopDebian() {
