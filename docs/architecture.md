@@ -50,7 +50,11 @@ layer are chosen per box.
 
 4. **Entware is chroot-less only** (layer 2). Where a Debian chroot exists,
    Debian supersedes it. admin-ap is the only Entware box (by physics on
-   current firmware; by choice after OpenWrt migration).
+   current firmware; by choice after OpenWrt migration). The framework's
+   `dd-wrt.sh` gates all Entware binds/services behind `ENABLE_ENTWARE=1`
+   (default 0); the vestigial scaffolding was removed from server-ap and
+   desktop-ap 2026-11-27 — their entware trees were empty and the motd/root
+   binds into them had been failing silently at every boot.
 
 5. **Operations are fleet-wide** (layer 6) and never live in a base: fleet
    cron (candidate for relocation off util-ap, issue #35), syslog to the
@@ -68,9 +72,9 @@ layer are chosen per box.
 |---|---|---|---|---|---|
 | gateway-ap | RAX-75 | stock Netgear | — | — | permanent exception |
 | admin-ap | WNDR3700v4 | DD-WRT d6 → OpenWrt (#36) | ✓ (until migration) | after migration (PIE) | DNS/DHCP — migrate carefully |
-| util-ap | EA6300 | DD-WRT st80 | ✗ (policy) | ✓ 13 armel | wedge-prone; no armhf (no VFP) |
-| server-ap | R9000 | DD-WRT #137 | ✗ | ✓ 13 armhf | NFS+DBs; squashfs watch (#20) |
-| desktop-ap | R9000 | DD-WRT #137 | ✗ | ✓ 13 armhf | |
+| util-ap | EA6300 | DD-WRT st80 | ✗ (policy; strip pending recovery) | ✓ 13 armel | wedge-prone; no armhf (no VFP) |
+| server-ap | R9000 | DD-WRT #137 | ✗ (removed 2026-11-27) | ✓ 13 armhf | NFS+DBs; squashfs watch (#20) |
+| desktop-ap | R9000 | DD-WRT #137 | ✗ (removed 2026-11-27) | ✓ 13 armhf | |
 | nas-01 | DNS-320 | Alt-F 4.4.86 → FlossWare base | ✗ | ✓ 13 armel (trixie) | NFSv4 blocked on kernel → fork |
 | laptop-01 | T590 | Debian 13 | — | — | VM host (fleet-builder) |
 | laptop-02 | P1 Gen 8 | Fedora 44 | — | — | operator console; exempt |

@@ -8,12 +8,14 @@
 # USB storage layout expected:
 #   /tmp/mnt/sda1/
 #     dd-wrt/          - DD-WRT overlay (root home, motd, init scripts, swap)
-#     entware/         - Entware package manager root (bind-mounted to /opt)
+#     entware/         - Entware root (optional, bind-mounted to /opt; only
+#                        used when ENABLE_ENTWARE=1 - chroot-less boxes only)
 #     debian/          - Debian chroot (optional)
 
 # Defaults (overridden by dd-wrt.conf if present)
 STORAGE_DIR="/tmp/mnt/sda1"
 LOG_FILE="/tmp/flossware.log"
+ENABLE_ENTWARE=0
 
 # Source host-specific config
 CONF_FILE="${STORAGE_DIR}/dd-wrt/etc/dd-wrt.conf"
@@ -81,32 +83,44 @@ startSleep() {
 startBind() {
     log "Binding..."
 
-    mkdir -p ${STORAGE_DIR}/entware /opt
-    mount -o bind ${STORAGE_DIR}/entware /opt
+    if [ "${ENABLE_ENTWARE}" = "1" ]; then
+        mkdir -p ${STORAGE_DIR}/entware /opt
+        mount -o bind ${STORAGE_DIR}/entware /opt
 
-    touch ${STORAGE_DIR}/entware/etc/motd
+        touch ${STORAGE_DIR}/entware/etc/motd
+    fi
 
     mount -o bind ${STORAGE_DIR}/dd-wrt/etc/motd /etc/motd
-    mount -o bind ${STORAGE_DIR}/dd-wrt/etc/motd ${STORAGE_DIR}/entware/etc/motd
     mount -o bind ${STORAGE_DIR}/dd-wrt/etc/motd ${STORAGE_DIR}/debian/etc/motd
 
     mount -o bind ${STORAGE_DIR}/dd-wrt/root /tmp/root
     mount -o bind ${STORAGE_DIR}/dd-wrt/root ${STORAGE_DIR}/debian/root
-    mount -o bind ${STORAGE_DIR}/dd-wrt/root ${STORAGE_DIR}/entware/root
+
+    if [ "${ENABLE_ENTWARE}" = "1" ]; then
+        mount -o bind ${STORAGE_DIR}/dd-wrt/etc/motd ${STORAGE_DIR}/entware/etc/motd
+        mount -o bind ${STORAGE_DIR}/dd-wrt/root ${STORAGE_DIR}/entware/root
+    fi
 }
 
 stopBind() {
     log "Unbinding..."
 
-    umount ${STORAGE_DIR}/entware/root
+    if [ "${ENABLE_ENTWARE}" = "1" ]; then
+        umount ${STORAGE_DIR}/entware/root
+    fi
     umount ${STORAGE_DIR}/debian/root
     umount /tmp/root
 
     umount ${STORAGE_DIR}/debian/etc/motd
-    umount ${STORAGE_DIR}/entware/etc/motd
+
+    if [ "${ENABLE_ENTWARE}" = "1" ]; then
+        umount ${STORAGE_DIR}/entware/etc/motd
+    fi
     umount /etc/motd
 
-    umount /opt
+    if [ "${ENABLE_ENTWARE}" = "1" ]; then
+        umount /opt
+    fi
 }
 
 startDdwrt() {
@@ -118,12 +132,20 @@ stopDdwrt() {
 }
 
 startEntware() {
+    if [ "${ENABLE_ENTWARE}" != "1" ]; then
+        return
+    fi
+
     log "Starting Entware..."
 
     ${STORAGE_DIR}/dd-wrt/etc/init.d/entware.sh start 2>&1 >> ${LOG_FILE}
 }
 
 stopEntware() {
+    if [ "${ENABLE_ENTWARE}" != "1" ]; then
+        return
+    fi
+
     log "Stopping Entware..."
 
     ${STORAGE_DIR}/dd-wrt/etc/init.d/entware.sh stop 2>&1 >> ${LOG_FILE}
