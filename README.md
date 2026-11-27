@@ -1,6 +1,9 @@
 # embedded-bootstrap
 
 
+> The fleet layered architecture (six layers, per-box mapping, the rules)
+> lives in [docs/architecture.md](docs/architecture.md) — this repo is layer 3.
+
 Bootstrap scripts for embedded devices (DD-WRT, Alt-F) with USB storage, Entware, and optional Debian chroot.
 # Example: the Alt-F firmware variant (nas-01). Same DontBeAPadavan debian.sh lineage as the DD-WRT examples; entry via Alt-F USER_SCRIPT instead of nvram rc_usb.
 
