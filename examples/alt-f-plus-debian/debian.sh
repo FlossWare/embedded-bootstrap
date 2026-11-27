@@ -11,7 +11,7 @@ CHROOT_SERVICES_LIST=/mnt/md0/alt-f/etc/chroot-services.list
 
 CHROOT_BIN=/usr/sbin/chroot
 
-MountedDirCount="$(/bin/mount | grep -c "$CHROOT_DIR/" | wc -l)"
+MountedDirCount="$(/bin/mount | grep -cF " on $CHROOT_DIR/")"
 
 startBind() {
 	for dir in dev dev/pts proc sys; do
@@ -25,7 +25,7 @@ startBind() {
 #	mount -o bind /mnt/md0/Alt-F/etc/resolv.conf $CHROOT_DIR/etc/resolve.conf
 	
 	touch ${CHROOT_DIR}/etc/motd
-	mount -o bind /mnt/md0/alt-f/etc/motd $CHROOT_DIR/etc/motd
+	mountpoint -q $CHROOT_DIR/etc/motd 2>/dev/null || mount -o bind /mnt/md0/alt-f/etc/motd $CHROOT_DIR/etc/motd
 	
 	mkdir -p ${CHROOT_DIR}/exports
 	mount -o bind /mnt/md0/exports ${CHROOT_DIR}/exports
@@ -50,7 +50,7 @@ startBind() {
 	#mount /mnt/sdc1 ${CHROOT_DIR}/mnt/usb
 	
 	mkdir -p ${CHROOT_DIR}/root
-	mount -o bind /mnt/md0/alt-f/root ${CHROOT_DIR}/root
+	mountpoint -q ${CHROOT_DIR}/root 2>/dev/null || mount -o bind /mnt/md0/alt-f/root ${CHROOT_DIR}/root
 }
 
 startServices() {
@@ -64,7 +64,7 @@ startServices() {
 			LC_ALL=C \
 			LANGUAGE=C \
 			LANG=C \
-			$CHROOT_BIN $CHROOT_DIR /etc/init.d/$item start </dev/null
+			$CHROOT_BIN $CHROOT_DIR "/etc/init.d/$item" start </dev/null
 			done
 	fi
 }
@@ -78,10 +78,10 @@ start() {
 }
 
 stopBind() {
-	umount ${CHROOT_DIR}/root
+	umount ${CHROOT_DIR}/root || echo "WARNING: root still mounted" >> /tmp/debian.log
 	umount ${CHROOT_DIR}/media/usb 2>/dev/null
-	umount ${CHROOT_DIR}/exports
-	umount ${CHROOT_DIR}/etc/motd
+	umount ${CHROOT_DIR}/exports || echo "WARNING: exports still mounted" >> /tmp/debian.log
+	umount ${CHROOT_DIR}/etc/motd || echo "WARNING: motd still mounted" >> /tmp/debian.log
 	for dir in sys proc dev/pts dev; do
 		/bin/umount -l $CHROOT_DIR/$dir 2>/dev/null || echo "WARNING: $dir still mounted" >> /tmp/debian.log
 	done
@@ -95,7 +95,7 @@ stopServices() {
 			LC_ALL=C \
 			LANGUAGE=C \
 			LANG=C \
-			$CHROOT_BIN $CHROOT_DIR /etc/init.d/$item stop </dev/null
+			$CHROOT_BIN $CHROOT_DIR "/etc/init.d/$item" stop </dev/null
 		done
 	fi
 }
