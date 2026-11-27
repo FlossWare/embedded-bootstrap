@@ -1,5 +1,8 @@
 # embedded-bootstrap
 
+> The full fleet architecture (layers, per-box mapping, repos) lives in
+> [sfloess/home-network docs/architecture.md](https://github.com/sfloess/home-network/blob/main/docs/architecture.md) — this repo is layer 3 of it.
+
 Bootstrap scripts for embedded devices (DD-WRT, Alt-F) with USB storage, Entware, and optional Debian chroot.
 # Example: the Alt-F firmware variant (nas-01). Same DontBeAPadavan debian.sh lineage as the DD-WRT examples; entry via Alt-F USER_SCRIPT instead of nvram rc_usb.
 
