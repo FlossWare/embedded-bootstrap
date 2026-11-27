@@ -15,7 +15,7 @@ MountedDirCount="$(/bin/mount | grep -cF " on $CHROOT_DIR/")"
 
 startBind() {
 	for dir in dev dev/pts proc sys; do
-		mountpoint -q $CHROOT_DIR/$dir 2>/dev/null || /bin/mount -o bind /$dir $CHROOT_DIR/$dir
+		grep -q " $CHROOT_DIR/$dir " /proc/mounts || /bin/mount -o bind /$dir $CHROOT_DIR/$dir
 	done
 	
 	touch $CHROOT_DIR/etc/hosts
@@ -25,14 +25,14 @@ startBind() {
 #	mount -o bind /mnt/md0/Alt-F/etc/resolv.conf $CHROOT_DIR/etc/resolve.conf
 	
 	touch ${CHROOT_DIR}/etc/motd
-	mountpoint -q $CHROOT_DIR/etc/motd 2>/dev/null || mount -o bind /mnt/md0/alt-f/etc/motd $CHROOT_DIR/etc/motd
+	grep -q " $CHROOT_DIR/etc/motd " /proc/mounts || mount -o bind /mnt/md0/alt-f/etc/motd $CHROOT_DIR/etc/motd
 	
 	mkdir -p ${CHROOT_DIR}/exports
-	mountpoint -q ${CHROOT_DIR}/exports 2>/dev/null || mount -o bind /mnt/md0/exports ${CHROOT_DIR}/exports || echo "WARNING: exports bind failed" >> /tmp/debian.log
+	grep -q " $CHROOT_DIR/exports " /proc/mounts || mount -o bind /mnt/md0/exports ${CHROOT_DIR}/exports || echo "WARNING: exports bind failed" >> /tmp/debian.log
 	
 	mkdir -p ${CHROOT_DIR}/media/usb
 	if [ -e /dev/sdc1 ]; then
-		mountpoint -q ${CHROOT_DIR}/media/usb 2>/dev/null || mount /dev/sdc1 ${CHROOT_DIR}/media/usb || echo "WARNING: /dev/sdc1 mount failed — media/usb is a bare directory" >> /tmp/debian.log
+		grep -q " $CHROOT_DIR/media/usb " /proc/mounts || mount /dev/sdc1 ${CHROOT_DIR}/media/usb || echo "WARNING: /dev/sdc1 mount failed — media/usb is a bare directory" >> /tmp/debian.log
 	else
 		echo "NOTE: no /dev/sdc1 present, skipping media/usb mount" >> /tmp/debian.log
 	fi
@@ -50,7 +50,7 @@ startBind() {
 	#mount /mnt/sdc1 ${CHROOT_DIR}/mnt/usb
 	
 	mkdir -p ${CHROOT_DIR}/root
-	mountpoint -q ${CHROOT_DIR}/root 2>/dev/null || mount -o bind /mnt/md0/alt-f/root ${CHROOT_DIR}/root
+	grep -q " $CHROOT_DIR/root " /proc/mounts || mount -o bind /mnt/md0/alt-f/root ${CHROOT_DIR}/root
 }
 
 startServices() {
@@ -79,7 +79,7 @@ start() {
 
 stopBind() {
 	umount ${CHROOT_DIR}/root || echo "WARNING: root still mounted" >> /tmp/debian.log
-	if mountpoint -q ${CHROOT_DIR}/media/usb 2>/dev/null; then
+	if grep -q " ${CHROOT_DIR}/media/usb " /proc/mounts; then
 		umount ${CHROOT_DIR}/media/usb || echo "WARNING: media/usb still mounted" >> /tmp/debian.log
 	fi
 	umount ${CHROOT_DIR}/exports || echo "WARNING: exports still mounted" >> /tmp/debian.log

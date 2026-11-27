@@ -32,10 +32,10 @@ startBind() {
 	#mount -o bind /mnt/md0/alt-f/root /root
 	
 	touch /etc/motd
-	mountpoint -q /etc/motd 2>/dev/null || mount -o bind /mnt/md0/alt-f/etc/motd /etc/motd
+	grep -q " /etc/motd " /proc/mounts || mount -o bind /mnt/md0/alt-f/etc/motd /etc/motd
 	
 	mkdir -p /exports
-	mountpoint -q /exports 2>/dev/null || mount -o bind /mnt/md0/exports /exports
+	grep -q " /exports " /proc/mounts || mount -o bind /mnt/md0/exports /exports
 	
 	#mkdir -p /mnt/md0/exports/usb
 	#mount -o bind /mnt/sdc1 /mnt/md0/exports/usb
