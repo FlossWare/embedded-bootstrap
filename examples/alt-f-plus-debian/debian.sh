@@ -11,12 +11,11 @@ CHROOT_SERVICES_LIST=/mnt/md0/alt-f/etc/chroot-services.list
 
 CHROOT_BIN=/usr/sbin/chroot
 
-MountedDirCount="$(/bin/mount | grep $CHROOT_DIR | wc -l)"
+MountedDirCount="$(/bin/mount | grep -c "$CHROOT_DIR/" | wc -l)"
 
 startBind() {
 	for dir in dev dev/pts proc sys; do
-		/bin/mount -o bind /$dir $CHROOT_DIR/$dir
-		sleep 2
+		mountpoint -q $CHROOT_DIR/$dir 2>/dev/null || /bin/mount -o bind /$dir $CHROOT_DIR/$dir
 	done
 	
 	touch $CHROOT_DIR/etc/hosts
@@ -32,7 +31,11 @@ startBind() {
 	mount -o bind /mnt/md0/exports ${CHROOT_DIR}/exports
 	
 	mkdir -p ${CHROOT_DIR}/media/usb
-	[ -e /dev/sdc1 ] && mount /dev/sdc1 ${CHROOT_DIR}/media/usb
+	if [ -e /dev/sdc1 ]; then
+		mount /dev/sdc1 ${CHROOT_DIR}/media/usb || echo "WARNING: /dev/sdc1 mount failed — media/usb is a bare directory" >> /tmp/debian.log
+	else
+		echo "NOTE: no /dev/sdc1 present, skipping media/usb mount" >> /tmp/debian.log
+	fi
 	
 	#mkdir -p ${CHROOT_DIR}/exports/usbc
 	#mount /dev/sdc1 ${CHROOT_DIR}/exports/usbc
@@ -56,12 +59,12 @@ startServices() {
 		echo "Please, define Debian services to start in $CHROOT_SERVICES_LIST file!"
 		echo 'One service per line. Hint: these are script names from Debian /etc/init.d/'
 	else
-		grep -vE "^\s*(#|$)" $CHROOT_SERVICES_LIST | while read -r item; do
+		grep -vE "^[[:space:]]*(#|$)" $CHROOT_SERVICES_LIST | while read -r item; do
 			PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 			LC_ALL=C \
 			LANGUAGE=C \
 			LANG=C \
-			$CHROOT_BIN $CHROOT_DIR /etc/init.d/$item start
+			$CHROOT_BIN $CHROOT_DIR /etc/init.d/$item start </dev/null
 			done
 	fi
 }
@@ -80,19 +83,19 @@ stopBind() {
 	umount ${CHROOT_DIR}/exports
 	umount ${CHROOT_DIR}/etc/motd
 	for dir in sys proc dev/pts dev; do
-		/bin/umount -l $CHROOT_DIR/$dir 2>/dev/null
+		/bin/umount -l $CHROOT_DIR/$dir 2>/dev/null || echo "WARNING: $dir still mounted" >> /tmp/debian.log
 	done
 }
 
 stopServices() {
 	if [ -e "$CHROOT_SERVICES_LIST" ]; then
 		echo 'Stopping Debian services...'
-		grep -vE "^\s*(#|$)" $CHROOT_SERVICES_LIST | while read -r item; do
+		grep -vE "^[[:space:]]*(#|$)" $CHROOT_SERVICES_LIST | while read -r item; do
 			PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 			LC_ALL=C \
 			LANGUAGE=C \
 			LANG=C \
-			$CHROOT_BIN $CHROOT_DIR /etc/init.d/$item stop
+			$CHROOT_BIN $CHROOT_DIR /etc/init.d/$item stop </dev/null
 		done
 	fi
 }
